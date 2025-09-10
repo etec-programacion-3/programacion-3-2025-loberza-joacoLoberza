@@ -1,0 +1,27 @@
+{
+  "name": "programacion-3-2025-loberza-joacoloberza",
+  "version": "1.0.0",
+  "description": "This is an e-commerce repository.",
+  "homepage": "https://github.com/etec-programacion-3/programacion-3-2025-loberza-joacoLoberza#readme",
+  "bugs": {
+    "url": "https://github.com/etec-programacion-3/programacion-3-2025-loberza-joacoLoberza/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/etec-programacion-3/programacion-3-2025-loberza-joacoLoberza.git"
+  },
+  "license": "ISC",
+  "author": "Joaquin Loberza",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7",
+    "tailwindcss": "^4.1.13"
+  }
+}
