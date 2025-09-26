@@ -1,5 +1,5 @@
 import sequelize from "./database.js";
-import { Sequelize, Model, DataTypes, Model, INTEGER } from "sequelize";
+import { Sequelize, Model, DataTypes, Model, INTEGER, DATE } from "sequelize";
 import { bcrypt } from "bcrypt";
 import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
 
@@ -10,7 +10,7 @@ User.init({
         primaryKey:true,
         autoincrement:true
     },
-    nombre:{
+    name:{
         type:DataTypes.STRING,
         allowNull:false,
         unique:true
@@ -25,7 +25,7 @@ User.init({
             }
         }
     },
-    clave: {
+    password: {
         type:DataTypes.STRING,
         allowNull:false,
     },
@@ -43,16 +43,16 @@ User.init({
 )
 
 User.beforeCreate(async (user) => {
-    if (user.clave) {
+    if (user.password) {
         const slatRounds = 10;
-        user.clave = await bcrypt.hash(user.clave, slatRounds)
+        user.password = await bcrypt.hash(user.password, slatRounds)
     }
 })
 
 User.beforeUpdate(async (user) => {
-    if (user.changed("clave")) {
+    if (user.changed("password")) {
         const slatRounds = 10;
-        user.clave = await bcrypt.hash(user.clave, slatRounds)
+        user.password = await bcrypt.hash(user.password, slatRounds)
     }
 })
 
@@ -63,15 +63,15 @@ Product.init({
         primaryKey:true,
         autoIncrement:true
     },
-    nombre: {
+    name: {
         type:DataTypes.STRING,
         allowNull:false
     },
-    descripcion: {
+    description: {
         type:DataTypes.STRING,
         allowNull:false
     },
-    precio: {
+    price: {
         type:DataTypes.INTEGER,
         allowNull:false
     },
@@ -79,7 +79,7 @@ Product.init({
         type:DataTypes.INTEGER,
         allowNull:false
     },
-    categoria: {
+    category: {
         type:DataTypes.STRING,
         allowNull:false
     }
@@ -93,9 +93,24 @@ Order.init({
         type:DataTypes.INTEGER,
         primaryKey:true,
         autoIncrement:true
+    },
+    user: {
+        type:DataTypes.INTEGER,
+        allowNull:false,
+        references: {
+            model: User,
+            key: 'id'
+        }
+    },
+    orderNumber: { //Thisone is the number of order of the user. References the amount of orders that he've done.
+        type:DataTypes.INTEGER,
+        allowNull:false
     }
 },
-{sequelize}
+{
+    sequelize,
+    timestamps:true
+}
 )
 
 class OrderItem extends Model{}
@@ -104,12 +119,114 @@ OrderItem.init({
         type:DataTypes.INTEGER,
         primaryKey:true,
         autoIncrement:true
+    },
+    arrivalEarly: {
+        type:DataTypes.DATE,
+        allowNull: false,
+    },
+    arrivalLate: {
+        type:DataTypes.DATE,
+        allowNull:false
+    },
+    arrivalTrue: {
+        type:DataTypes.DATE,
+        defaultValue: null
+    },
+    state: {
+        type:DataTypes.ENUM('pending', 'prossesing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded', 'failed'),
+        defaultValue: 'pending'
+    },
+    prodcut: {
+        type:DataTypes.INTEGER,
+        allowNull:false,
+        references: {
+            model: Product,
+            key: 'id'
+        }
+    },
+    order: {
+        type:DataTypes.INTEGER,
+        allowNull:false,
+        references: {
+            model: Order,
+            key: 'id'
+        }
     }
 },
 {sequelize}
 )
 
-// Hasta acá llegamos, faltan los últimos dos modelos y las relcaiones.
+class Chat extends Model{}
+Chat.init({
+    id:{
+        type:DataTypes.INTEGER,
+        primaryKey:true,
+        autoIncrement:true
+    }
+
+},
+{sequelize}
+)
+
+class Message extends Model{}
+Message.init({
+    id:{
+        type:DataTypes.INTEGER,
+        primaryKey:true,
+        autoIncrement:true
+    },
+    content: {
+        type:DataTypes.STRING,
+        allowNull:false
+    },
+    sendedBy: {
+        type:DataTypes.INTEGER,
+        allowNull:false,
+        references: {
+            model: User,
+            key: 'id'
+        }
+    },
+    chat: {
+        type:DataTypes.INTEGER,
+        allowNull:false,
+        references: {
+            model:Chat,
+            key: 'id'
+        }
+    }
+},
+{
+    sequelize,
+    timestamps:true
+}
+)
+
+User.hasMany(Order)
+Order.belongsTo(User)
+
+User.hasMany(Message)
+Message.belongsTo(User)
+
+User.belongsToMany(Chat, {
+    through:'UserChat',
+    foreignKey:'userFk',
+    otherKey:'chatFk'
+})
+Chat.belongsToMany(User, {
+    through:'UserChat',
+    foreignKey:'chatFk',
+    otherKey:'userFk'
+})
+
+Chat.hasMany(Message)
+Message.belongsTo(Chat)
+
+Order.hasMany(OrderItem)
+OrderItem.belongsTo(Order)
+
+Product.hasMany(OrderItem)
+OrderItem.belongsTo(Product)
 
 (async () => {
     try {
