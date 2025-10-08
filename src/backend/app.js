@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { ERROR } from 'sqlite3';
+import { config } from 'dotenv';
 
 //Creamos el proceso de express y el puerto para el servidor.
 const app = express();

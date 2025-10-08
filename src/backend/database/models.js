@@ -3,7 +3,7 @@ import { Sequelize, Model, DataTypes, Model, INTEGER, DATE } from "sequelize";
 import { bcrypt } from "bcrypt";
 import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
 
-class User extends Model{}
+export class User extends Model{}
 User.init({
     id:{
         type:DataTypes.INTEGER,
@@ -56,7 +56,7 @@ User.beforeUpdate(async (user) => {
     }
 })
 
-class Product extends Model{}
+export class Product extends Model{}
 Product.init({
     id: {
         type:DataTypes.INTEGER,
@@ -87,7 +87,7 @@ Product.init({
 {sequelize}
 )
 
-class Order extends Model{}
+export class Order extends Model{}
 Order.init({
     id: {
         type:DataTypes.INTEGER,
@@ -113,7 +113,7 @@ Order.init({
 }
 )
 
-class OrderItem extends Model{}
+export class OrderItem extends Model{}
 OrderItem.init({
     id: {
         type:DataTypes.INTEGER,
@@ -156,7 +156,7 @@ OrderItem.init({
 {sequelize}
 )
 
-class Chat extends Model{}
+export class Chat extends Model{}
 Chat.init({
     id:{
         type:DataTypes.INTEGER,
@@ -168,7 +168,7 @@ Chat.init({
 {sequelize}
 )
 
-class Message extends Model{}
+export class Message extends Model{}
 Message.init({
     id:{
         type:DataTypes.INTEGER,
