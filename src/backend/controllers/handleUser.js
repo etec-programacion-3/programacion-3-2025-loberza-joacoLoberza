@@ -1,8 +1,6 @@
 import { User } from '../database/models.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { use } from 'react';
-import flattenColorPalette from 'tailwindcss/lib/util/flattenColorPalette';
 
 export const userLogin = async (req, res) => {
   try {
@@ -31,37 +29,35 @@ export const userLogin = async (req, res) => {
         }
       } else {
         res.status(404).json({
-          message:"Request not solved: user name doesn't exist.",
+          message:"ERROR| Request not solved: user name doesn't exist.",
           success: false
         })
       }
     } else {
       res.status(400).json({
-        message:"Incomplete request: left required fields.",
+        message:"ERROR| Incomplete request: left required fields.",
         success:flase
       })
     }
   } catch (err) {
     res.status(500).json({
       success:false,
-      message: `ERROR: Internal server error.\n  ${err}`
+      message: `ERROR| Internal server error:\n  ${err}`
     })
   }
 }
 
 export const userRegister = async (req, res) => {
   try {
-    const {userName, password, email, roll} = req.body;
-    if (userName && password && email && roll) {
-      const User = await User.findOne({
-        where: {name:userName}
-      })
-      
-      if (User) {
-        res.status(409)
-      }
-    }
+    const newUser = await User.create(req.body)
+    res.status(200).josn({
+      success:true,
+      message:"Successfull register."
+    })
   } catch (err) {
-
+    res.status(500).json({
+      success:false,
+      message:`ERROR| Can't register the user:\n  ${err}`
+    })
   }
 }
