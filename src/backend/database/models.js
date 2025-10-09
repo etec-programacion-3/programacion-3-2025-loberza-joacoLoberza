@@ -37,6 +37,11 @@ User.init({
                 throw new Error("El roll del usuario no es el correcto, debe ser cliente o admin.")
             }
         }
+    },
+    dni: {
+        type:DataTypes.NUMBER,
+        allowNull: false,
+        unique:true
     }
 },
 {sequelize}

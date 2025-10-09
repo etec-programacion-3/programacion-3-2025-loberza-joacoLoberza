@@ -1,13 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
+import usersRouter from './routers/users';
 
 //Creamos el proceso de express y el puerto para el servidor.
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-//Midleware para recibir y enviar JSON.
+//Midlewares y router raíz.
 app.use(express.json())
+app.use(cors())
+app.use('/users', usersRouter)
 
 //Creamos el servidor.
 try {
