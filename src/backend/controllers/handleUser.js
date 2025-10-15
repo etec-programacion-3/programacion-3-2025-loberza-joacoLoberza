@@ -6,42 +6,43 @@ export const userLogin = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     if (name && email && password) {
-      const User = await User.findOne({
-        where: {name: name}
+      const user = await User.findOne({
+        where: { name: name }
       });
 
-      if (User) {
-        const validPass = await bcrypt.compare(password, User.password);
-        
-        if (email === User.email) {
-          const validEmail = true;
-        } else {
-          const validEmail = false;
-        }
+      if (user) {
+        const validPass = await bcrypt.compare(password, user.password);
+
+        const validEmail = (email === user.email);
 
         if (validPass && validEmail) {
-          const token = jwt.sign({user:User.name, roll:User.roll, email:User.email}, process.env.JWT_KEY || 'develop_key');
+          const token = jwt.sign({ user: user.name, roll: user.roll, email: user.email }, process.env.JWT_KEY || 'develop_key');
           res.status(200).json({
             success: true,
             message: "Successfull login.",
             token: token
           })
+        } else {
+          res.status(401).json({
+            success: false,
+            message: "ERROR| Unauthorized access: Invalid credentials."
+          })
         }
       } else {
-        res.status(404).json({
-          message:"ERROR| Request not solved: user name doesn't exist.",
+        return res.status(404).json({
+          message: "ERROR| Request not solved: User name doesn't exist.",
           success: false
         })
       }
     } else {
-      res.status(400).json({
-        message:"ERROR| Incomplete request: left required fields.",
-        success:flase
+      return res.status(400).json({
+        message: "ERROR| Incomplete request: left required fields.",
+        success: flase
       })
     }
   } catch (err) {
-    res.status(500).json({
-      success:false,
+    return res.status(500).json({
+      success: false,
       message: `ERROR| Internal server error:\n  ${err}`
     })
   }
@@ -51,13 +52,13 @@ export const userRegister = async (req, res) => {
   try {
     const newUser = await User.create(req.body)
     res.status(200).josn({
-      success:true,
-      message:"Successfull register."
+      success: true,
+      message: "ACK| Successfull register."
     })
   } catch (err) {
     res.status(500).json({
-      success:false,
-      message:`ERROR| Can't register the user:\n  ${err}`
+      success: false,
+      message: `ERROR| Can't register the user:\n  ${err}`
     })
   }
 }
