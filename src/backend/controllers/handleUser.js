@@ -19,7 +19,7 @@ export const userLogin = async (req, res) => {
           const token = jwt.sign({ user: user.name, roll: user.roll, email: user.email }, process.env.JWT_KEY || 'develop_key');
           res.status(200).json({
             success: true,
-            message: "Successfull login.",
+            message: "ACK| Successfull login.",
             token: token
           })
         } else {
