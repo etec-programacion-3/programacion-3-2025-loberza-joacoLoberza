@@ -33,7 +33,7 @@ User.init({
 		type: DataTypes.STRING,
 		allowNull: false,
 		validation(value) {
-			if (!value === "cliente" || !value === "admin") {
+			if (!value === "client" || !value === "admin") {
 				throw new Error("El roll del usuario no es el correcto, debe ser cliente o admin.")
 			}
 		}
@@ -91,8 +91,11 @@ Product.init({
 		allowNull: false
 	},
 	price: {
-		type: DataTypes.INTEGER,
-		allowNull: false
+		type: DataTypes.DECIMAL,
+		allowNull: false,
+		validate: {
+			min:0
+		}
 	},
 	stock: {
 		type: DataTypes.INTEGER,
