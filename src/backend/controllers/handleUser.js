@@ -25,25 +25,25 @@ export const userLogin = async (req, res) => {
         } else {
           res.status(401).json({
             success: false,
-            message: "ERROR| Unauthorized access: Invalid credentials."
+            message: "ERROR|\nLocation: userLogin controller.\nUnauthorized access: Invalid credentials."
           })
         }
       } else {
         return res.status(404).json({
-          message: "ERROR| Request not solved: User name doesn't exist.",
+          message: "ERROR|\nLocation: userLogin controller.\nRequest not solved: User name doesn't exist.",
           success: false
         })
       }
     } else {
       return res.status(400).json({
-        message: "ERROR| Incomplete request: left required fields.",
+        message: "ERROR|\nLocation: userLogin controller.\nIncomplete request: left required fields.",
         success: flase
       })
     }
   } catch (err) {
     return res.status(500).json({
       success: false,
-      message: `ERROR| Internal server error:\n  ${err}`
+      message: `ERROR|\nLocation: userLogin controller.\nInternal server error:\n  ${err}`
     })
   }
 }
@@ -58,7 +58,7 @@ export const userRegister = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       success: false,
-      message: `ERROR| Can't register the user:\n  ${err}`
+      message: `ERROR|\nLocation: userRegister controller.\nCan't register the user:\n  ${err}`
     })
   }
 }
