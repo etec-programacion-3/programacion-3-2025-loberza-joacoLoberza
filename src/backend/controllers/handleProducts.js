@@ -1,5 +1,5 @@
 import { Category, Product } from "../database/models.js";
-import { NOW, Op, Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 
 class AccessRequiredDTO {
 	constructor(req, res) {

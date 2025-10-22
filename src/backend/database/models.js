@@ -42,6 +42,10 @@ User.init({
 		type: DataTypes.NUMBER,
 		allowNull: false,
 		unique: true
+	},
+	home: {
+		type: DataTypes.STRING,
+		allowNull: false,
 	}
 },
 	{ sequelize }
@@ -99,7 +103,10 @@ Product.init({
 	},
 	stock: {
 		type: DataTypes.INTEGER,
-		allowNull: false
+		allowNull: false,
+		validate: {
+			min:0
+		}
 	},
 	category: {
 		type: DataTypes.STRING,
@@ -107,11 +114,62 @@ Product.init({
 		references: {
 			model: Category,
 			key: 'id'
+		},
+		validate: {
+			min:0
 		}
 	}
 },
 	{ sequelize }
 )
+
+export class Cart extends Model {}
+Cart.init({
+	id:{
+		type:DataTypes.INTEGER,
+		primaryKey:true,
+		autoincrement:true
+	},
+	user: {
+		type: DataTypes.INTEGER,
+		allowNull: false,
+		references: {
+			model:User,
+			key:'id',
+		},
+		validate: {
+			min:0
+		}
+	}
+})
+
+export class CartItem extends Model { }
+CartItem.init({
+	id: {
+		type:DataTypes.INTEGER,
+		primaryKey:true,
+		autoIncrement:true
+	},
+	product: {
+		type:DataTypes.INTEGER,
+		allowNull:false,
+		references: {
+			model:Product,
+			key:'id',
+		},
+		validate: {
+			min:0
+		}
+	},
+	amount: {
+		type: DataTypes.INTEGER,
+		allowNull:false,
+		defaultValue: 1,
+		validate: {
+			min:0
+		}
+	}
+})
 
 export class Order extends Model { }
 Order.init({
@@ -126,6 +184,9 @@ Order.init({
 		references: {
 			model: User,
 			key: 'id'
+		},
+		validate: {
+			min:0
 		}
 	},
 	orderNumber: { //Thisone is the number of order of the user. References the amount of orders that he've done.
@@ -168,6 +229,9 @@ OrderItem.init({
 		references: {
 			model: Product,
 			key: 'id'
+		},
+		validate: {
+			min:0
 		}
 	},
 	order: {
@@ -176,6 +240,9 @@ OrderItem.init({
 		references: {
 			model: Order,
 			key: 'id'
+		},
+		validate: {
+			min:0
 		}
 	}
 },
@@ -211,6 +278,9 @@ Message.init({
 		references: {
 			model: User,
 			key: 'id'
+		},
+		validate: {
+			min:0
 		}
 	},
 	chat: {
@@ -219,6 +289,9 @@ Message.init({
 		references: {
 			model: Chat,
 			key: 'id'
+		},
+		validate: {
+			min:0
 		}
 	}
 },
@@ -247,6 +320,9 @@ Chat.belongsToMany(User, {
 
 Chat.hasMany(Message)
 Message.belongsTo(Chat)
+
+Cart.hasMany(CartItem)
+CartItem.belongsTo(Cart)
 
 Category.hasMany(Product)
 Product.belongsTo(Category)
