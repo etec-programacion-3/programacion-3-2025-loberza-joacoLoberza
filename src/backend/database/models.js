@@ -189,7 +189,7 @@ Order.init({
 			min:0
 		}
 	},
-	orderNumber: { //Thisone is the number of order of the user. References the amount of orders that he've done.
+	orderNumber: { //Thisone is the number of order of the user. References the amount of orders that he've done (not the id from the data base, is like an id for the orders of each user).
 		type: DataTypes.INTEGER,
 		allowNull: false
 	}
