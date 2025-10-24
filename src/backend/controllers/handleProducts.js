@@ -18,7 +18,7 @@ class MasterProductsGetDTO {
   constructor(data) {
     this.after = data.after;
     this.limit = data.limit ? data.limit : 10;
-    this.order = data.order || "ASC";
+    this.order = data.order.toUpperCase() || "ASC";
   }
 
   orderValid() {
@@ -52,6 +52,13 @@ const getAllProducts = async (req, res) => {
       order: pagOrder,
       limit: Number(prodGetDTO.limit),
     });
+
+    if (products == []) {
+			return res.status(400).json({
+				success:false,
+				massage:'ERROR| Product not found.'
+			})
+		}
 
     res.status(200).json({
       success: true,
@@ -100,6 +107,13 @@ const getProductsByCategory = async (req, res) => {
       limit: Number(prodReqDTO.limit),
     });
 
+    if (products == []) {
+			return res.status(400).json({
+				success:false,
+				massage:'ERROR| Product not found.'
+			})
+		}
+
     res.status(200).json({
       success: true,
       message: `ACK| Successfull products get.`,
@@ -127,6 +141,13 @@ const getProductsByName = async (req, res) => {
       order: pagOrder,
       limit: Number(prodGetDTO.limit),
     });
+
+    if (products == []) {
+			return res.status(400).json({
+				success:false,
+				massage:'ERROR| Product not found.'
+			})
+		}
 
     if (products.length === 0) {
       return res.status(400).json({

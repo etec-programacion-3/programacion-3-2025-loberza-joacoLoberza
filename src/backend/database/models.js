@@ -234,6 +234,13 @@ OrderItem.init({
 			min:0
 		}
 	},
+	amount: {
+		type: DataTypes.INTEGER,
+		defaultValue: 1,
+		validate: {
+			min:1
+		}
+	},
 	order: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
