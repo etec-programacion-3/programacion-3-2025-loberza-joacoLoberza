@@ -134,7 +134,7 @@ const getProductsByName = async (req, res) => {
     const prodGetDTO = new MasterProductsGetDTO(reqData);
     prodGetDTO.orderValid();
     const pagFilter =
-      prodGetDTO.after && reqData.name ? { id: { [Op.gt]: prodGetDTO.after }, name: reqData.name } : {name: reqData.name};
+      prodGetDTO.after && reqData.name ? { id: { [Op.gt]: prodGetDTO.after }, name: { [Op.like] : `%${reqData.name}%`} } : {name: reqData.name};
     const pagOrder = [["id", `${prodGetDTO.order}`]];
     const products = await Product.findAll({
       where: pagFilter,
@@ -171,11 +171,31 @@ const getProductsByName = async (req, res) => {
 };
 
 export const addProduct = async (req, res) => {
+  /*
+    Expected body:
+    {
+      name: string,
+      description: string,
+      price: int,
+      stock: int,
+      category: string
+    }
+  */
 	try {
 		const addProdDTO = new AccessRequiredDTO(req);
 		addProdDTO.verifyRoll()
-		const addedProd = await Product.create(req.body);
-		res.status(200).json({
+    const catId = (await Category.findOne({
+      attributes:['id'],
+      where : { name : req.body.category}
+    }))?.id; 
+		const addedProd = await Product.create({
+      name:req.body.name,
+      description:req.body.description,
+      price:req.body.price,
+      stock:req.body.stock,
+      category:catId
+    });
+		res.status(201).json({
 			success:true,
 			message: 'ACK| Product added successfully.'
 		})
