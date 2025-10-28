@@ -39,7 +39,7 @@ User.init({
 		}
 	},
 	dni: {
-		type: DataTypes.NUMBER,
+		type: DataTypes.STRING,
 		allowNull: false,
 		unique: true
 	},
@@ -72,7 +72,6 @@ Category.init({
 		primaryKey: true,
 		autoIncrement: true
 	},
-
 	name: {
 		type: DataTypes.STRING,
 		allowNull: false
@@ -193,7 +192,7 @@ Order.init({
 		type: DataTypes.INTEGER,
 		allowNull: false
 	}
-},
+	},
 	{
 		sequelize,
 		timestamps: true

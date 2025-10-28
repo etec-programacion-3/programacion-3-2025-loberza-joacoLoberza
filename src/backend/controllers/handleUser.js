@@ -49,9 +49,18 @@ export const userLogin = async (req, res) => {
 }
 
 export const userRegister = async (req, res) => {
+  /*
+    Expexted body:
+      name:string,
+      email:string,
+      password:string,
+      roll:string,
+      dni:string,
+      home:string,
+  */
   try {
     const newUser = await User.create(req.body)
-    res.status(200).josn({
+    res.status(201).josn({
       success: true,
       message: "ACK| Successfull register."
     })
@@ -61,4 +70,8 @@ export const userRegister = async (req, res) => {
       message: `ERROR|\nLocation: userRegister controller.\nCan't register the user:\n  ${err}`
     })
   }
+}
+
+export const deleteUser = async (req, res) => {
+
 }
