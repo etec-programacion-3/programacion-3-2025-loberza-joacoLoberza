@@ -60,7 +60,7 @@ export const userRegister = async (req, res) => {
   */
   try {
     const newUser = await User.create(req.body)
-    res.status(201).josn({
+    res.status(201).json({
       success: true,
       message: "ACK| Successfull register."
     })
@@ -74,4 +74,13 @@ export const userRegister = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
 
+}
+
+//Temporal controller
+
+export const getUser = async (req, res) => {
+  const users  = await User.findAll();
+  res.status(200).json({
+    users,
+  })
 }

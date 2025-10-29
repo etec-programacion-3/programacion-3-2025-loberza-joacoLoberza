@@ -1,4 +1,4 @@
-import jwt, { decode, verify } from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 
 const verifyToken = (req, res, next) => {
 	const token = req.headers?.authorization?.split(' ')[1]
@@ -9,6 +9,7 @@ const verifyToken = (req, res, next) => {
 
 	try {
 		const decodedToken = jwt.verify(token, process.env.JWT_KEY || 'develop_key')
+		console.log(decodedToken) //DEV LINE - TEMPORAL
 		req.payload = decodedToken;
 		next()
 	} catch (err) {
@@ -19,4 +20,4 @@ const verifyToken = (req, res, next) => {
 	}
 }
 
-export default { verifyToken }
+export default verifyToken
