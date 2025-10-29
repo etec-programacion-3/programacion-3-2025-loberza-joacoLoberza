@@ -1,14 +1,13 @@
 import sequelize from "./database.js";
-import { Sequelize, Model, DataTypes, Model, INTEGER, DATE } from "sequelize";
-import { bcrypt } from "bcrypt";
-import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
+import { Sequelize, Model, DataTypes } from "sequelize";
+import bcrypt from "bcrypt";
 
 export class User extends Model { }
 User.init({
 	id: {
 		type: DataTypes.INTEGER,
 		primaryKey: true,
-		autoincrement: true
+		autoIncrement: true
 	},
 	name: {
 		type: DataTypes.STRING,
@@ -33,7 +32,7 @@ User.init({
 		type: DataTypes.STRING,
 		allowNull: false,
 		validation(value) {
-			if (!value === "client" || !value === "admin") {
+			if (value !== "client" || value !== "admin") {
 				throw new Error("El roll del usuario no es el correcto, debe ser cliente o admin.")
 			}
 		}
@@ -53,8 +52,8 @@ User.init({
 
 User.beforeCreate(async (user) => {
 	if (user.password) {
-		const slatRounds = 10;
-		user.password = await bcrypt.hash(user.password, slatRounds)
+		const saltRounds = 10;
+		user.password = await bcrypt.hash(user.password, saltRounds)
 	}
 })
 
@@ -76,7 +75,9 @@ Category.init({
 		type: DataTypes.STRING,
 		allowNull: false
 	}
-})
+},
+	{ sequelize }
+)
 
 export class Product extends Model { }
 Product.init({
@@ -127,7 +128,7 @@ Cart.init({
 	id:{
 		type:DataTypes.INTEGER,
 		primaryKey:true,
-		autoincrement:true
+		autoIncrement:true
 	},
 	user: {
 		type: DataTypes.INTEGER,
@@ -140,7 +141,9 @@ Cart.init({
 			min:0
 		}
 	}
-})
+},
+	{ sequelize }
+)
 
 export class CartItem extends Model { }
 CartItem.init({
@@ -168,7 +171,9 @@ CartItem.init({
 			min:0
 		}
 	}
-})
+},
+	{ sequelize }
+)
 
 export class Order extends Model { }
 Order.init({
@@ -222,7 +227,7 @@ OrderItem.init({
 		type: DataTypes.ENUM('pending', 'prossesing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded', 'failed'),
 		defaultValue: 'pending'
 	},
-	prodcut: {
+	product: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
 		references: {
@@ -339,15 +344,22 @@ OrderItem.belongsTo(Order)
 Product.hasMany(OrderItem)
 OrderItem.belongsTo(Product)
 
-	(async () => {
-		try {
-			console.log("Verificando conexión con la base de datos...")
-			await sequelize.authenticate()
+User.hasOne(Cart)
+Cart.belongsTo(User)
 
-			console.log("Sincronizando las tablas nuevas con la base de datos...")
-			await sequelize.sync()
-		} catch (err) {
-			throw new Error(`ERROR: Hubo un problema con la autenticación o con la sincronización de las tablas con la base de datos.\n    Más información:\n    ${err}`)
-		}
+Product.hasMany(CartItem)
+CartItem.belongsTo(Product)
 
-	})();
+const integrate = async () => {
+	try {
+		console.log("Verificando conexión con la base de datos...")
+		await sequelize.authenticate()
+
+		console.log("Sincronizando las tablas nuevas con la base de datos...")
+		await sequelize.sync()
+	} catch (err) {
+		throw new Error(`ERROR: Hubo un problema con la autenticación o con la sincronización de las tablas con la base de datos.\n    Más información:\n    ${err}`)
+	}
+};
+
+integrate ()

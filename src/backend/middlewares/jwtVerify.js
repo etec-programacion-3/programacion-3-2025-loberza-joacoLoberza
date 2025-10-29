@@ -1,4 +1,4 @@
-import jwt, { decode, verify } from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 
 const verifyToken = (req, res, next) => {
 	const token = req.headers?.authorization?.split(' ')[1]
@@ -19,4 +19,4 @@ const verifyToken = (req, res, next) => {
 	}
 }
 
-export default { verifyToken }
+export default verifyToken
