@@ -15,7 +15,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/backend/app.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -23,8 +24,12 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mercadopago": "^2.9.0",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7",
     "tailwindcss": "^4.1.13"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }

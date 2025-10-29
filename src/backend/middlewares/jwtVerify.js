@@ -9,6 +9,7 @@ const verifyToken = (req, res, next) => {
 
 	try {
 		const decodedToken = jwt.verify(token, process.env.JWT_KEY || 'develop_key')
+		console.log(decodedToken) //DEV LINE - TEMPORAL
 		req.payload = decodedToken;
 		next()
 	} catch (err) {

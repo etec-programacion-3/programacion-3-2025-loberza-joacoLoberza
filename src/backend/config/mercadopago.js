@@ -1,0 +1,1 @@
+import mercadopago from 'mercadopago'

@@ -176,18 +176,19 @@ export const addProduct = async (req, res) => {
     {
       name: string,
       description: string,
-      price: int,
-      stock: int,
+      price: Number,
+      stock: Number,
       category: string
     }
   */
 	try {
 		const addProdDTO = new AccessRequiredDTO(req);
 		addProdDTO.verifyRoll()
-    const catId = (await Category.findOne({
+    /*const catId = (await Category.findOne({
       attributes:['id'],
       where : { name : req.body.category}
-    }))?.id; 
+    }))?.id; */
+    const catId = parseInt(req.body.category)
 		const addedProd = await Product.create({
       name:req.body.name,
       description:req.body.description,
