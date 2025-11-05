@@ -170,7 +170,15 @@ CartItem.init({
 		validate: {
 			min:0
 		}
-	}
+	},
+	cart: {
+		type: DataTypes.INTEGER,
+		allowNull:false,
+		references: {
+			model:Cart,
+			key: 'id'
+		}
+	},
 },
 	{ sequelize }
 )
@@ -201,6 +209,9 @@ Order.init({
 			type: DataTypes.INTEGER,
 			allowNull: false
 		},
+		paidAt: {
+			type: DataTypes.DATE,
+		},
 		paymentId: {
 			type: DataTypes.INTEGER,
 		},
@@ -215,8 +226,8 @@ Order.init({
 )
 
 Order.beforeUpdate(async (order) => {
-	if (order.status === 'paid' && (paymentId === undefined || preferencesId === undefined)) {
-		throw new ValidationError(`'paymentId' and 'preferencesId' fields are required`)
+	if (order.status === 'paid' && (order.paymentId === undefined || order.preferencesId === undefined || order.paidAt === undefined)) {
+		throw new ValidationError(`'paidAt', 'paymentId' and 'preferencesId' fields are required`)
 	}
 })
 

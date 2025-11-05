@@ -222,8 +222,9 @@ export const createOrder = async (req, res) =>  {
 					model: CartItem,
 					required:true
 				}
-			]
-		}, { transaction })
+			],
+			transaction
+		})
 
 		const shippingAddress = cart.User.home;
 
@@ -237,11 +238,12 @@ export const createOrder = async (req, res) =>  {
 
 		const lastUserOrder = await Order.findOne({
 			attributes: ['orderNumber'],
-			where: { id : userId },
-			order: [['orderNumber', 'DESC']]
-		}, { transaction });
+			where: { user : userId },
+			order: [['orderNumber', 'DESC']],
+			transaction
+		});
 	
-		const newOrderNum = lastUserOrder.orderNumber + 1;
+		const newOrderNum = lastUserOrder? lastUserOrder.orderNumber + 1 : 1;
 
 		const newOrder = await Order.create( {
 				user: userId,
@@ -252,15 +254,16 @@ export const createOrder = async (req, res) =>  {
 		let total = 0;
 		let preferenceItems = [];
 
-		for (item of cart.CartItem) {
+		for (item of cart.CartItems) {
 			const product = await Product.findOne({
 				include: {
 					model:CartItem,
 					attributes: [],
 					where: { id : item.id },
 					required:true
-				}
-			}, { transaction });
+				},
+				transaction
+			});
 
 			if (product.stock < item.amount) {
 				await transaction.rollback()

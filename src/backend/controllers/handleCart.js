@@ -85,14 +85,15 @@ export const addItem = async (req, res) => {
 		}
 	*/
 	try {
-		const userId = (await User.findOne({
-			attributes:['id'],
-			where: { name : req.body.user }
-		}))?.id;
+		const userId = payload.id;
 		const prodId = (await Product.findOne({
 			attributes:['id'],
 			where: { name: req.body.product}
 		}))?.id;
+		const cartId = (await Cart.findOne({
+			where: { user: userId },
+			attributes: ['id']
+		}))?.id
 		if (!userId) return res.status(404).json({
 			success:false,
 			message: `ERROR| User resource not found.`
@@ -100,7 +101,8 @@ export const addItem = async (req, res) => {
 		const addedItem = await CartItem.create({
 			user: userId,
 			product: prodId,
-			amount: req.body.amount
+			amount: req.body.amount,
+			cart: cartId
 		});
 		res.status(201).json({
 			success: true,
