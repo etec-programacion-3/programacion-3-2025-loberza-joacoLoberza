@@ -204,7 +204,7 @@ Order.init({
 		paymentId: {
 			type: DataTypes.INTEGER,
 		},
-		preferencesId: {
+		preferenceId: {
 			type: DataTypes.INTEGER,
 		}
 	},
@@ -237,11 +237,11 @@ OrderItem.init({
 	},
 	arrivalTrue: {
 		type: DataTypes.DATE,
-		defaultValue: null
+		defaultValue: undefined
 	},
 	state: {
 		type: DataTypes.ENUM('prossesing', 'shipped', 'delivered', 'failed'),
-		defaultValue: 'pending'
+		defaultValue: 'prossesing'
 	},
 	product: {
 		type: DataTypes.INTEGER,
