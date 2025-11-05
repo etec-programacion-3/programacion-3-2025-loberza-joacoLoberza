@@ -2,7 +2,8 @@ import express from "express";
 import cors from "cors";
 import { config } from "dotenv";
 import usersRouter from "./routers/users.js";
-import productsRouter from "./routers/products.js"
+import productsRouter from "./routers/products.js";
+import cartRouter from "./routers/cart.js";
 
 //Creamos el proceso de express y el puerto para el servidor.
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(cors());
 app.use("/user", usersRouter);
 app.use("/products", productsRouter);
+app.use("/cart", cartRouter)
 
 //Creamos el servidor.
 try {
