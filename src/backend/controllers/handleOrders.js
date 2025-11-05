@@ -1,5 +1,8 @@
-import { Category, Order, OrderItem, Product, User } from '../database/models.js';
+import { Category, Order, OrderItem, Product, User, Cart, CartItem } from '../database/models.js';
 import { Sequelize, Op } from 'sequelize';
+import mercadopago from '../config/mercadopago.js';
+import sequelize from '../config/database.js';
+import { addItem } from './handleCart.js';
 
 class GetOrdersDTO {
 	constructor(req) {
@@ -190,6 +193,146 @@ export const getOrderById = async (req, res) => {
 		res.status(500).json({
 			success: false,
 			message: `ERROR| Internal server error:\n  ${err}`
+		})
+	}
+}
+
+export const createOrder = async (req, res) =>  {
+	/*
+	Expexted body:
+	  {
+	    arrivalEarly -> Date
+			arrivalLate -> Date
+		}
+	*/
+	const transaction = await sequelize.transaction();
+	try {
+		const userId = req.payload.id;
+		const { arrivalEarly, arrivalLate } = req.body;
+
+		const cart = await Cart.findOne({
+			include: [
+				{
+				model:User,
+				attributes: ['id', 'home'],
+				where: { id : userId },
+				required:true
+				},
+				{
+					model: CartItem,
+					required:true
+				}
+			],
+			transaction
+		})
+
+		const shippingAddress = cart.User.home;
+
+		if (!cart) {
+			await transaction.rollback()
+			return res.status(404).json({
+				success:false,
+				message:`ERROR| Couldn't found the users cart.`
+			})
+		}
+
+		const lastUserOrder = await Order.findOne({
+			attributes: ['orderNumber'],
+			where: { user : userId },
+			order: [['orderNumber', 'DESC']],
+			transaction
+		});
+	
+		const newOrderNum = lastUserOrder? lastUserOrder.orderNumber + 1 : 1;
+
+		const newOrder = await Order.create( {
+				user: userId,
+				orderNumber: newOrderNum,
+			}, { transaction }
+		)
+
+		let total = 0;
+		let preferenceItems = [];
+
+		for (item of cart.CartItems) {
+			const product = await Product.findOne({
+				include: {
+					model:CartItem,
+					attributes: [],
+					where: { id : item.id },
+					required:true
+				},
+				transaction
+			});
+
+			if (product.stock < item.amount) {
+				await transaction.rollback()
+				return res.status(400).json({
+					success:false,
+					message:`ERROR| Insufficient stock for the requested product.`
+				})
+			}
+
+			total += item.amount * product.price;
+
+			const newOrderItem = await OrderItem.create({
+				arrivalEarly,
+				arrivalLate,
+				product: product.id,
+				amount: item.amount,
+				order: newOrder.id,
+			}, { transaction })
+
+			preferenceItems.push({
+				title: product.name,
+				unit_price: product.price,
+				quantity: item.amount,
+				currency_id:'ARS'
+			})
+		}
+
+		const preference = {
+			items: preferenceItems,
+			back_urls: {
+				success: `${process.env.MERCADOPAGO_SUCCESS_PAY}`,
+				failure: `${process.env.MERCADOPAGO_FAILED_PAY}`,
+				pending: `${process.env.MERCADOPAGO_PENDING_PAY}`,
+			},
+			auto_retrun: 'approved',
+			external_reference: newOrder.id,
+			notification_url: `${prosses.env.MERCADOPAGO_WEBHOOK}`,
+      statement_descriptor: 'TIENDAPRO',
+      expires:true,
+			expiration_date_from: new Date().toISOString(),
+			expiration_date_to: new Date( new Date().getTime() + 60 * 60 * 1000 /*1 Hora en milisegundos*/ ).toISOString(),
+		}
+
+		const preferenceInfo = await mercadopago.preferences.create(preference);
+		const pay_url = preferenceInfo.body.init_point;
+		const preferenceId = preferenceInfo.body.id;
+		
+		await Order.update({
+			preferenceId
+		}, { where: { orderNumber : newOrderNum } })
+
+		await transaction.commit()
+
+		res.status(200).json({
+			success:true,
+			message: 'ACK| Order and payment created successfully.',
+			order: {
+				orderNumber: newOrderNum,
+				total,
+				status: 'pending'
+			},
+			pay_url
+		})
+
+	} catch (err) {
+		transaction.rollback()
+		res.status(500).json({
+			success:false,
+			message: `ERROR| Internal server error.`
 		})
 	}
 }
