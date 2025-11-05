@@ -1,5 +1,5 @@
-import sequelize from "./database.js";
-import { Sequelize, Model, DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
+import { Sequelize, Model, DataTypes, ValidationError } from "sequelize";
 import bcrypt from "bcrypt";
 
 export class User extends Model { }
@@ -177,32 +177,48 @@ CartItem.init({
 
 export class Order extends Model { }
 Order.init({
-	id: {
-		type: DataTypes.INTEGER,
-		primaryKey: true,
-		autoIncrement: true
-	},
-	user: {
-		type: DataTypes.INTEGER,
-		allowNull: false,
-		references: {
-			model: User,
-			key: 'id'
+		id: {
+			type: DataTypes.INTEGER,
+			primaryKey: true,
+			autoIncrement: true
 		},
-		validate: {
-			min:0
+		user: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+			references: {
+				model: User,
+				key: 'id'
+			},
+			validate: {
+				min:0
+			}
+		},
+		status: {
+			type: DataTypes.STRING.ENUM('pending', 'cancelled', 'returned', 'refunded', 'failed', 'paid'),
+			defaultValue: 'pending',
+		},
+		orderNumber: { //Thisone is the number of order of the user. References the amount of orders that he've done (not the id from the data base, is like an id for the orders of each user).
+			type: DataTypes.INTEGER,
+			allowNull: false
+		},
+		paymentId: {
+			type: DataTypes.INTEGER,
+		},
+		preferencesId: {
+			type: DataTypes.INTEGER,
 		}
-	},
-	orderNumber: { //Thisone is the number of order of the user. References the amount of orders that he've done (not the id from the data base, is like an id for the orders of each user).
-		type: DataTypes.INTEGER,
-		allowNull: false
-	}
 	},
 	{
 		sequelize,
 		timestamps: true
 	}
 )
+
+Order.beforeUpdate(async (order) => {
+	if (order.status === 'paid' && (paymentId === undefined || preferencesId === undefined)) {
+		throw new ValidationError(`'paymentId' and 'preferencesId' fields are required`)
+	}
+})
 
 export class OrderItem extends Model { }
 OrderItem.init({
@@ -224,7 +240,7 @@ OrderItem.init({
 		defaultValue: null
 	},
 	state: {
-		type: DataTypes.ENUM('pending', 'prossesing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded', 'failed'),
+		type: DataTypes.ENUM('prossesing', 'shipped', 'delivered', 'failed'),
 		defaultValue: 'pending'
 	},
 	product: {

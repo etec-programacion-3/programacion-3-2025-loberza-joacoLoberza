@@ -1,5 +1,8 @@
-import { Category, Order, OrderItem, Product, User } from '../database/models.js';
+import { Category, Order, OrderItem, Product, User, Cart, CartItem } from '../database/models.js';
 import { Sequelize, Op } from 'sequelize';
+import mercadopago from '../config/mercadopago.js';
+import sequelize from '../config/database.js';
+import { underscoredIf } from 'sequelize/lib/utils';
 
 class GetOrdersDTO {
 	constructor(req) {
@@ -191,5 +194,32 @@ export const getOrderById = async (req, res) => {
 			success: false,
 			message: `ERROR| Internal server error:\n  ${err}`
 		})
+	}
+}
+
+export const createOrder = async (req, res) =>  {
+	const transaction = sequelize.transaction();
+	try {
+		const userId = req.payload.id;
+
+		const cart = await Cart.findOne({
+			include: [
+				{
+				model:User,
+				attributes: ['id', 'home'],
+				where: { id : userId },
+				required:true
+				},
+				{
+					model: CartItem,
+					required:true
+				}
+			]
+		})
+
+		const shippingAddress = cart.User.home;
+
+	} catch (err) {
+
 	}
 }
