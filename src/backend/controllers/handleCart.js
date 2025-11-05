@@ -1,4 +1,4 @@
-import { InvalidConnectionError, Model, Op, Sequelize } from "sequelize";
+import { Op } from "sequelize";
 import { Cart, CartItem, Category, Product, User } from '../database/models.js';
 
 class GetCartDTO {

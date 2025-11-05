@@ -3,7 +3,7 @@ import { getManager, addProduct, deleteProduct, updateProduct} from '../controll
 import verifyToken from '../middlewares/jwtVerify.js'
 
 const productsRouter = express.Router();
-productsRouter.get('/', verifyToken, getManager)
+productsRouter.get('/', getManager)
 productsRouter.post('/add', verifyToken, addProduct)
 productsRouter.patch('/:id', verifyToken, updateProduct)
 productsRouter.delete('/:id', verifyToken, deleteProduct)
