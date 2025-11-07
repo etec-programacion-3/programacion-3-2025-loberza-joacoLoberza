@@ -1,5 +1,5 @@
-import { Category, Product } from "../database/models.js";
-import { Op, Sequelize } from "sequelize";
+import { CartItem, Category, Product } from "../database/models.js";
+import { Op } from "sequelize";
 
 class AccessRequiredDTO {
 	constructor(req) {
@@ -236,13 +236,31 @@ export const deleteProduct = async (req, res) => {
 	try {
 		const deleteProdDTO = new AccessRequiredDTO(req);
 		deleteProdDTO.verifyRoll()
+
 		const product = await Product.findByPk(deleteProdDTO.id);
+    const cartItems = await CartItem.findAll({
+      include: {
+        model: Product,
+        attributes: [],
+        where: { id : deleteProdDTO.id},
+        required: true
+      }
+    })
+
 		if (!product) {
 			return res.status(404).json({
 				success:false,
 				message: 'ERROR|\nLocation: updateProduct controller.\n Type: Product not found.'
 			})
 		}
+
+    if (cartItems) {
+      await cartItems.update({
+        name: 'Este producto ya no se encuentra a la venta.',
+        amount: 0
+      })
+    }
+
 		const deletedProd = await product.destroy();
 		res.status(200).json({
 			success:true,

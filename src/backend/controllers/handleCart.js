@@ -24,57 +24,6 @@ class GetCartDTO {
 	}
 }
 
-export const createCart = async (req, res) => {
-	// Body isn't expected.
-	try {
-		const userId = (await User.findOne({
-			attributes:['id'],
-			where: req.payload.user
-		}))?.id;
-		const addedItem = await Cart.create({
-			user:userId
-		});
-		res.status(201).json({
-			success: true,
-			message: 'ACK| Cart created successfully.'
-		})
-	} catch (err) {
-		res.status(500).json({
-			success: false,
-			message: 'ERROR| Internal server error.'
-		})
-	}
-}
-
-export const desrtoyCart =async (req, res) => {
-	try {
-		const cartToDestroy = await Cart.findOne({
-			include: {
-				model:User,
-				attributes:['id'],
-				where: { id: req.payload.id },
-				required:true
-			}
-		});
-		if (!cartToDestroy) {
-			return res.status(400).json({
-				success:false,
-				message: `ERROR| Couldn't find the cart.`
-			})
-		}
-		await cartToDestroy.destroy()
-		res.status(200).json({
-			success:true,
-			message: 'ACK| Cart destoryed successfully.'
-		})
-	} catch (err) {
-		res.status(500).json({
-			success: false,
-			message: 'ERROR| Internal server error.'
-		})
-	}
-}
-
 export const addItem = async (req, res) => {
 	/*
 		Expexted body:
