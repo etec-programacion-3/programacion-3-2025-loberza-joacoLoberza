@@ -293,8 +293,15 @@ Chat.init({
 		type: DataTypes.INTEGER,
 		primaryKey: true,
 		autoIncrement: true
+	},
+	type: {
+		type: DataTypes.ENUM('group', 'contact'),
+		allowNull:false
+	},
+	name: {
+		type: DataTypes.STRING,
+		allowNull:false
 	}
-
 },
 	{ sequelize }
 )
@@ -321,6 +328,21 @@ Message.init({
 			min:0
 		}
 	},
+	seen: {
+		type: DataTypes.BOOLEAN,
+		defaultValue: false
+	},
+	seenBy: {
+		type: DataTypes.STRING,
+		defaultValue: '[]', // Expexted: '[userId, userId, userId ...]'
+		get() {
+			const users = this.getDataValue('seenBy')
+			return users ? JSON.parse(users) : []
+		},
+		set(users) {
+			this.setDataValue('seenBy', JSON.stringify(users))
+		}
+	},
 	chat: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
@@ -339,22 +361,49 @@ Message.init({
 	}
 )
 
+export class UserChat extends Model {  }
+UserChat.init({
+	id: {
+		type: DataTypes.INTEGER,
+		autoIncrement: true,
+		primaryKey: true
+	},
+	userFk: {
+		type: DataTypes.INTEGER,
+		allowNull: false,
+		references: {
+			model: User,
+			key: 'id'
+		},
+		validate: {
+			min:0
+		}
+	},
+	chatFk: {
+		type: DataTypes.INTEGER,
+		allowNull: false,
+		references: {
+			model: Chat,
+			key: 'id'
+		},
+		validate: {
+			min:0
+		}
+	},
+	isAdmin: {
+		type: DataTypes.BOOLEAN,
+		defaultValue: false,
+	}
+})
+
 User.hasMany(Order)
 Order.belongsTo(User)
 
 User.hasMany(Message)
 Message.belongsTo(User)
 
-User.belongsToMany(Chat, {
-	through: 'UserChat',
-	foreignKey: 'userFk',
-	otherKey: 'chatFk'
-})
-Chat.belongsToMany(User, {
-	through: 'UserChat',
-	foreignKey: 'chatFk',
-	otherKey: 'userFk'
-})
+User.belongsToMany(Chat, {through: UserChat})
+Chat.belongsToMany(User, {through: UserChat})
 
 Chat.hasMany(Message)
 Message.belongsTo(Chat)

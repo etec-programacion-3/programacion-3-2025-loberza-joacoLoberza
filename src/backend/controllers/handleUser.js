@@ -1,4 +1,4 @@
-import { User } from '../database/models.js'
+import { User, Cart, CartItem } from '../database/models.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
@@ -60,6 +60,9 @@ export const userRegister = async (req, res) => {
   */
   try {
     const newUser = await User.create(req.body)
+    const newCart = await Cart.create({
+      user: newUser.id
+    })
     res.status(201).json({
       success: true,
       message: "ACK| Successfull register."
@@ -73,9 +76,35 @@ export const userRegister = async (req, res) => {
 }
 
 export const deleteUser = async (req, res) => {
+  try {
+    const userId = req.payload.id;
 
+    const user = await User.findOne({ where : { id: userId } })
+    const cart = await Cart.findOne({ where : { user : id } })
+    const cartItems = await CartItem.findOne({ where : { cart : Cart.id } })
+
+    if (!user || !cart) {
+      return res.status(404).json({
+        success:false,
+        message: `ERROR: Resourses not found, couldn't delete.`
+      })
+    }
+
+    if (cartItems) {const oldCartItems = await cartItems.destroy();}
+    const oldCart = await cart.destroy();
+    const oldUser = await user.destroy();
+
+    res.status(200).json({
+      success: true,
+      message: 'ACK| User deleted successfully.'
+    })
+  } catch (err) {
+    res.status(500).json({
+      success: true,
+      message: 'ERROR| Internal server error.'
+    })
+  }
 }
-
 //Temporal controller
 export const getUser = async (req, res) => {
   const users  = await User.findAll();

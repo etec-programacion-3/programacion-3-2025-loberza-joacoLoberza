@@ -90,9 +90,11 @@ const mercadopagoWebhook = async (req, res) => {
           paymentId: data.id
         }, { transaction });
     }
-    //Hacer commit y mandar respuesta.
+    transaction.commit()
+    res.status(200).send('OK')
   } catch(err) {
-
+    transaction.rollback()
+    res.status(500).send('Error')
   } 
 }
 
