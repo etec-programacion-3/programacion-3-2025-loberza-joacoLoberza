@@ -1,5 +1,5 @@
-import { Category, Product } from "../database/models.js";
-import { Op, Sequelize } from "sequelize";
+import { CartItem, Category, Product } from "../database/models.js";
+import { Op } from "sequelize";
 
 class AccessRequiredDTO {
 	constructor(req) {
@@ -18,7 +18,7 @@ class MasterProductsGetDTO {
   constructor(data) {
     this.after = data.after;
     this.limit = data.limit ? data.limit : 10;
-    this.order = data.order.toUpperCase() || "ASC";
+    this.order = (data.order || "ASC").toUpperCase();
   }
 
   orderValid() {
@@ -51,12 +51,15 @@ const getAllProducts = async (req, res) => {
       where: pagFilter,
       order: pagOrder,
       limit: Number(prodGetDTO.limit),
+      include: {
+        model:Category
+      }
     });
 
-    if (products == []) {
-			return res.status(400).json({
+    if (products.length === 0) {
+			return res.status(404).json({
 				success:false,
-				massage:'ERROR| Product not found.'
+				message:'ERROR| Product not found.'
 			})
 		}
 
@@ -95,22 +98,26 @@ const getProductsByCategory = async (req, res) => {
         }
       }
     }
-    const prodReqDTO = new GetProdByCatDTO(reqData, res);
+    const prodReqDTO = new GetProdByCatDTO(reqData);
     prodReqDTO.orderValid();
     await prodReqDTO.catValid();
 
-    const pagFilter = prodReqDTO.after ? { id: { [Op.gt]: prodReqDTO.after }, category: prodReqDTO.cat } : { category: prodReqDTO.cat };
+    const catId = prodReqDTO.categorys.find(cat => cat.name === prodReqDTO.cat).id
+    const pagFilter = prodReqDTO.after ? { id: { [Op.gt]: prodReqDTO.after }, category: catId } : { category: catId };
     const pagOrder = [["id", `${prodReqDTO.order}`]];
     const products = await Product.findAll({
       where: pagFilter,
       order: pagOrder,
       limit: Number(prodReqDTO.limit),
+      include: {
+        model:Category
+      }
     });
 
-    if (products == []) {
-			return res.status(400).json({
+    if (products.length === 0) {
+			return res.status(404).json({
 				success:false,
-				massage:'ERROR| Product not found.'
+				message:'ERROR| Product not found.'
 			})
 		}
 
@@ -133,28 +140,31 @@ const getProductsByName = async (req, res) => {
     const reqData = req.query;
     const prodGetDTO = new MasterProductsGetDTO(reqData);
     prodGetDTO.orderValid();
-    const pagFilter =
-      prodGetDTO.after && reqData.name ? { id: { [Op.gt]: prodGetDTO.after }, name: { [Op.like] : `%${reqData.name}%`} } : {name: reqData.name};
+
+    if (!reqData.name) {
+      return res.status(400).json({
+        success: false,
+        message: 'ERROR| Product name is required.'
+      });
+    }
+
+    const pagFilter = prodGetDTO.after && reqData.name ? { id: { [Op.gt]: prodGetDTO.after }, name: { [Op.like] : `%${reqData.name}%`} } : {name: reqData.name};
     const pagOrder = [["id", `${prodGetDTO.order}`]];
     const products = await Product.findAll({
       where: pagFilter,
       order: pagOrder,
       limit: Number(prodGetDTO.limit),
+      include: {
+        model: Category
+      }
     });
 
-    if (products == []) {
-			return res.status(400).json({
+    if (products.length === 0) {
+			return res.status(404).json({
 				success:false,
-				massage:'ERROR| Product not found.'
+				message:'ERROR| Product not found.'
 			})
 		}
-
-    if (products.length === 0) {
-      return res.status(400).json({
-        success: true,
-        message: `ERROR|\nLocation: getProductByName controller.\nType: Product not found.`,
-      });
-    }
 
     res.status(200).json({
       success: true,
@@ -184,11 +194,10 @@ export const addProduct = async (req, res) => {
 	try {
 		const addProdDTO = new AccessRequiredDTO(req);
 		addProdDTO.verifyRoll()
-    /*const catId = (await Category.findOne({
+    const catId = (await Category.findOne({
       attributes:['id'],
       where : { name : req.body.category}
-    }))?.id; */
-    const catId = parseInt(req.body.category)
+    }))?.id;
 		const addedProd = await Product.create({
       name:req.body.name,
       description:req.body.description,
@@ -236,13 +245,31 @@ export const deleteProduct = async (req, res) => {
 	try {
 		const deleteProdDTO = new AccessRequiredDTO(req);
 		deleteProdDTO.verifyRoll()
+
 		const product = await Product.findByPk(deleteProdDTO.id);
+    const cartItems = await CartItem.findAll({
+      include: {
+        model: Product,
+        attributes: [],
+        where: { id : deleteProdDTO.id},
+        required: true
+      }
+    })
+
 		if (!product) {
 			return res.status(404).json({
 				success:false,
 				message: 'ERROR|\nLocation: updateProduct controller.\n Type: Product not found.'
 			})
 		}
+
+    if (cartItems.length > 0) {
+      await Promise.all(cartItems.map(item => item.update({
+        name: 'Este producto ya no se encuentra a la venta.',
+        amount: 0
+      })));
+    }
+
 		const deletedProd = await product.destroy();
 		res.status(200).json({
 			success:true,
