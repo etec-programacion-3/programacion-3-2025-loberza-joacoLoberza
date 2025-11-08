@@ -1,4 +1,4 @@
-import { joinChat, sendMessage, seenMessage, editMessage, deleteMessage, typeMessage, noTypeMessage, leaveChat, validAccess } from "../events/messages";
+import { joinChat, sendMessage, seenMessage, editMessage, deleteMessage, typeMessage, noTypeMessage, leaveChat, validAccess } from "../events/messages.js";
 
 const messagesConnection = (socket) => {
   //This room is a generic room for all users for recibe notifications of all chats instead of join each user to all their chats.

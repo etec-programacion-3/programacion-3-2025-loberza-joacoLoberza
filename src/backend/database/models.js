@@ -18,11 +18,11 @@ User.init({
 		type: DataTypes.STRING,
 		allowNull: false,
 		unique: true,
-		validation(value) {
-			if (!value.includes("@")) {
-				throw new Error("No se ingresó un e-mail correcto en el campo de e-mail de la tabla User")
-			}
-		}
+    validate: {
+        isEmail: {
+            msg: "No se ingresó un e-mail correcto en el campo de e-mail de la tabla User"
+        }
+    }
 	},
 	password: {
 		type: DataTypes.STRING,
@@ -31,11 +31,12 @@ User.init({
 	roll: {
 		type: DataTypes.STRING,
 		allowNull: false,
-		validation(value) {
-			if (value !== "client" || value !== "admin") {
-				throw new Error("El roll del usuario no es el correcto, debe ser cliente o admin.")
-			}
-		}
+		validate: {
+        isIn: {
+            args: [['client', 'admin']],
+            msg: "El roll del usuario no es el correcto, debe ser client o admin."
+        }
+    }
 	},
 	dni: {
 		type: DataTypes.STRING,
@@ -74,6 +75,10 @@ Category.init({
 	name: {
 		type: DataTypes.STRING,
 		allowNull: false
+	},
+	isDefault: {
+		type: DataTypes.BOOLEAN,
+		defaultValue: false
 	}
 },
 	{ sequelize }
@@ -109,14 +114,14 @@ Product.init({
 		}
 	},
 	category: {
-		type: DataTypes.STRING,
+		type: DataTypes.INTEGER,
 		allowNull: false,
 		references: {
 			model: Category,
 			key: 'id'
 		},
 		validate: {
-			min:0
+			min: 0
 		}
 	}
 },
@@ -202,7 +207,7 @@ Order.init({
 			}
 		},
 		status: {
-			type: DataTypes.STRING.ENUM('pending', 'cancelled', 'returned', 'refunded', 'failed', 'paid'),
+			type: DataTypes.ENUM('pending', 'cancelled', 'returned', 'refunded', 'failed', 'paid'),
 			defaultValue: 'pending',
 		},
 		orderNumber: { //Thisone is the number of order of the user. References the amount of orders that he've done (not the id from the data base, is like an id for the orders of each user).
@@ -226,8 +231,8 @@ Order.init({
 )
 
 Order.beforeUpdate(async (order) => {
-	if (order.status === 'paid' && (order.paymentId === undefined || order.preferencesId === undefined || order.paidAt === undefined)) {
-		throw new ValidationError(`'paidAt', 'paymentId' and 'preferencesId' fields are required`)
+	if (order.status === 'paid' && (order.paymentId === undefined || order.preferenceId === undefined || order.paidAt === undefined)) {
+		throw new ValidationError(`'paidAt', 'paymentId' and 'preferenceId' fields are required`)
 	}
 })
 
@@ -251,8 +256,8 @@ OrderItem.init({
 		defaultValue: undefined
 	},
 	state: {
-		type: DataTypes.ENUM('prossesing', 'shipped', 'delivered', 'failed'),
-		defaultValue: 'prossesing'
+		type: DataTypes.ENUM('processing', 'shipped', 'delivered', 'failed'),
+		defaultValue: 'processing'
 	},
 	product: {
 		type: DataTypes.INTEGER,
@@ -361,7 +366,7 @@ Message.init({
 	}
 )
 
-export class UserChat extends Model {  }
+export class UserChat extends Model { }
 UserChat.init({
 	id: {
 		type: DataTypes.INTEGER,
@@ -394,39 +399,83 @@ UserChat.init({
 		type: DataTypes.BOOLEAN,
 		defaultValue: false,
 	}
+}, { sequelize })
+
+User.hasMany(Order, {
+    foreignKey: 'user'
+})
+Order.belongsTo(User, {
+    foreignKey: 'user'
 })
 
-User.hasMany(Order)
-Order.belongsTo(User)
+User.hasMany(Message, {
+    foreignKey: 'sendedBy'
+})
+Message.belongsTo(User, {
+    foreignKey: 'sendedBy'
+})
 
-User.hasMany(Message)
-Message.belongsTo(User)
+User.belongsToMany(Chat, {
+    through: UserChat,
+    foreignKey: 'userFk',
+		onDelete: 'CASCADE'
+})
+Chat.belongsToMany(User, {
+    through: UserChat,
+    foreignKey: 'chatFk',
+		onDelete: 'CASCADE'
+})
 
-User.belongsToMany(Chat, {through: UserChat})
-Chat.belongsToMany(User, {through: UserChat})
+Chat.hasMany(Message, {
+    foreignKey: 'chat'
+})
+Message.belongsTo(Chat, {
+    foreignKey: 'chat'
+})
 
-Chat.hasMany(Message)
-Message.belongsTo(Chat)
+Cart.hasMany(CartItem, {
+    foreignKey: 'cart'
+})
+CartItem.belongsTo(Cart, {
+    foreignKey: 'cart'
+})
 
-Cart.hasMany(CartItem)
-CartItem.belongsTo(Cart)
+Category.hasMany(Product, {
+    foreignKey: 'category'
+})
+Product.belongsTo(Category, {
+    foreignKey: 'category'
+})
 
-Category.hasMany(Product)
-Product.belongsTo(Category)
+Order.hasMany(OrderItem, {
+    foreignKey: 'order'
+})
+OrderItem.belongsTo(Order, {
+    foreignKey: 'order'
+})
 
-Order.hasMany(OrderItem)
-OrderItem.belongsTo(Order)
+Product.hasMany(OrderItem, {
+    foreignKey: 'product'
+})
+OrderItem.belongsTo(Product, {
+    foreignKey: 'product'
+})
 
-Product.hasMany(OrderItem)
-OrderItem.belongsTo(Product)
+User.hasOne(Cart, {
+    foreignKey: 'user'
+})
+Cart.belongsTo(User, {
+    foreignKey: 'user'
+})
 
-User.hasOne(Cart)
-Cart.belongsTo(User)
+Product.hasMany(CartItem, {
+    foreignKey: 'product'
+})
+CartItem.belongsTo(Product, {
+    foreignKey: 'product'
+})
 
-Product.hasMany(CartItem)
-CartItem.belongsTo(Product)
-
-const integrate = async () => {
+export const integrate = async () => {
 	try {
 		console.log("Verificando conexión con la base de datos...")
 		await sequelize.authenticate()
@@ -437,5 +486,3 @@ const integrate = async () => {
 		throw new Error(`ERROR: Hubo un problema con la autenticación o con la sincronización de las tablas con la base de datos.\n    Más información:\n    ${err}`)
 	}
 };
-
-integrate ()

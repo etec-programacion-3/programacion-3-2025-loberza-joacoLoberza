@@ -1,5 +1,5 @@
-import { io } from "../../app";
-import { Chat, Message } from "../../database/models";
+import { io } from "../../app.js";
+import { Chat, Message } from "../../database/models.js";
 
 export const validAccess = async (data, socket) => {
   try {
@@ -164,7 +164,9 @@ export const seenMessage = async (data, socket) => {
     })
 
     const updatedSeenBy = [...msgToUpdate.seenBy, userId];
-    await msgToUpdate.update({ seenBy: updatedSeenBy });
+    const newMessage = await msgToUpdate.update({ seenBy: updatedSeenBy });
+
+    io.to(`user:${msgToUpdate.sendedBy}`).emit('seen-message', { seenBy : newMessage.seenBy }) //Here the front of the sender of the message must verify if all the members of the chat have seen that.
 
   } catch (err) {
     socket.emit('error', {
@@ -197,9 +199,18 @@ export const editMessage = async (data, socket) => {
       message:`ERROR| Usuario no autorizado para esta opración.`
     });
 
-    await msgToEdit.update({ content })
+    const editedMsg = await msgToEdit.update({ content })
 
-    io.to(`chat:${chatId}`).emit('edited-message', { msgId }) // Here, the frontend users have to consult for the new message by its id and show it.
+    io.to(`chat:${chatId}`).emit('edited-message', {
+      id: editedMsg.id,
+      content,
+      seen: editedMsg.seen,
+      sendedBy: {
+        id: userId,
+        name: socket.payload.name,
+        roll: socket.payload.roll
+      }
+    }) // Here, the frontend users have to show the new message.
 
     /*
     Send notification.

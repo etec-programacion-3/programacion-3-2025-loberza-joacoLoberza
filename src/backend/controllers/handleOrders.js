@@ -52,7 +52,7 @@ export const getAllOrders = async (req, res) => {
 				{
 					model: User,
 					attributes: ['name', 'id'],
-					where: { name: getAllOrdersDTO.payload.id },
+					where: { id: getAllOrdersDTO.payload.id },
 					required: true
 				},
 				{
@@ -107,7 +107,7 @@ export const getOrdersByProduct = async (req, res) => {
 				{
 					model: User,
 					attributes: ['name', 'id'],
-					where: { name: getOrdersByProdDTO.payload.name },
+					where: { id: getOrdersByProdDTO.payload.id },
 					required: true,
 				},
 				{
@@ -158,7 +158,7 @@ export const getOrderById = async (req, res) => {
 				{
 					model:User,
 					attributes: ['name', 'id'],
-					where: { name:req.payload.name },
+					where: { id: req.payload.id },
 					required: true
 				},
 				{

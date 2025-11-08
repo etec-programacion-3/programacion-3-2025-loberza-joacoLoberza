@@ -3,10 +3,13 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from "cors";
 import { config } from "dotenv";
+import { integrate } from "./database/models.js";
 import verifyTokenSocket from "./middlewares/jwtVerifySocket.js";
 import usersRouter from "./routers/users.js";
 import productsRouter from "./routers/products.js";
 import cartRouter from "./routers/cart.js";
+import chatsRouter from "./routers/chats.js";
+import categoryRouter from "./routers/categorys.js";
 import messagesConnection from "./socket.io/handlers/messages.js";
 
 //Creamos el proceso de express y el puerto para el servidor.
@@ -18,9 +21,11 @@ app.use(express.json());
 app.use(cors({
   origin:'*' //CAMBIAR CUNADO EMPIEZE EL FRONTEND
 }));
-app.use("/user", usersRouter);
-app.use("/products", productsRouter);
+app.use("/user", usersRouter)
+app.use("/products", productsRouter)
 app.use("/cart", cartRouter)
+app.use("/chats", chatsRouter)
+app.use("/category", categoryRouter)
 
 //Creamos el servidor HTTP.
 const server = createServer(app)
@@ -38,6 +43,7 @@ io.on('connection', messagesConnection)
 
 //Creamos el servidor.
 try {
+  integrate();
   server.listen(PORT, () => {
     console.log(`Servidor inciado en el puerto ${PORT}...`);
   });

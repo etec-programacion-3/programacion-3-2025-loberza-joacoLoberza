@@ -1,12 +1,26 @@
 import { Op } from "sequelize";
 import { Cart, CartItem, Category, Product, User } from '../database/models.js';
+import sequelize from '../config/database.js';
 
 class GetCartDTO {
 	constructor(req) {
-		this.after = req.query.after;
-		this.limit = req.query.limit ? req.query.limit : 5;
-		this.order = req.query.order ? req.query.order : 'ASC';
-		this.search = req.query.search;
+		    console.log('Valores originales:', {
+        after: req.query.after,
+        limit: req.query.limit,
+        tipo_after: typeof req.query.after,
+        tipo_limit: typeof req.query.limit
+    });
+    this.after = req.query.after !== undefined ? parseInt(req.query.after) : null;
+    this.limit = req.query.limit !== undefined ? parseInt(req.query.limit) : 5;
+    this.order = (req.query.order || 'ASC').toUpperCase();
+    this.search = req.query.search;
+
+		console.log('Valores parseados:', {
+			after: this.after,
+			limit: this.limit,
+			tipo_after: typeof this.after,
+			tipo_limit: typeof this.limit
+		});
 	}
 
 	validateOrder() {
@@ -16,7 +30,7 @@ class GetCartDTO {
   }
 
 	validateFilter() {
-		if (this.after < 0 || this.limit <= 0 || this.limit > 50) {
+		if ((this.after !== null && this.after < 0) || this.limit <= 0 || this.limit > 50) {
 			throw new Error('Invalid pagination querys.')
 		} else {
 			this.pagFilter = this.after ? { id: { [Op.gt]: this.after } } : {}
@@ -28,13 +42,12 @@ export const addItem = async (req, res) => {
 	/*
 		Expexted body:
 		{
-		user:string,
 		product: string,
 		amount: int
 		}
 	*/
 	try {
-		const userId = payload.id;
+		const userId = req.payload.id;
 		const prodId = (await Product.findOne({
 			attributes:['id'],
 			where: { name: req.body.product}
@@ -67,16 +80,23 @@ export const addItem = async (req, res) => {
 
 export const deleteItem = async (req, res) => {
 	/*
-		Expexted querys:
-			product=name_of_product
+		Expexted Params: :id -> Id of the cart item.
 	*/
 	try {
+		const cart = await Cart.findOne({
+			where: { user: req.payload.id },
+			attributes: ['id']
+		});
+
+		if (!cart) {
+			return res.status(404).json({
+				success: false,
+				message: 'ERROR| Cart not found.'
+			});
+		}
+
 		const itemToRemove = await CartItem.findOne({
-			include: {
-				model:Product,
-				where:{ name : req.query.product },
-				required:true
-			}
+			where: { cart: cart.id, id:req.params.id }
 		})
 		if (!itemToRemove) return res.status(404).json({
 			success:false,
@@ -97,50 +117,48 @@ export const deleteItem = async (req, res) => {
 
 export const getCart = async (req, res) => {
 	try {
-		const getCartDTO = new GetCartDTO(req);
+		//Instance DTO to configure the serach parameters.
+		const getCartDTO = new GetCartDTO(req); 
+
 		getCartDTO.validateFilter()
 		getCartDTO.validateOrder()
+
+		//Instance the cart 
 		const cart = await Cart.findOne({
-			where: { user:req.payload.user },
+			where: { user:req.payload.id },
 			include: {
-				model:CartItem,
-				where:getCartDTO.pagFilter,
-				required:true,
-				include : {
-					model:Product,
-					required:true,
-					include: {
-						model:Category,
-						required:true
-					}
+				model: CartItem,
+				separate: true,
+				limit: getCartDTO.limit,
+				order: [['id', getCartDTO.order]],
+				include: {
+						model: Product,
+						required: true,
+						include: {
+								model: Category,
+								required: true
+						}
 				}
 			}
 		});
+		
 		if (!cart) return res.status(404).json({
 			success:false,
 			message: 'ERROR| Cart not found.'
 		})
 
-		let items = cart.CartItems || [];
-
-		if (getCartDTO.after) {
-			items = items.filter( item => item.id > getCartDTO.after )
-		}
-
-		items = items.slice(0, getCartDTO.limit)
-		if (getCartDTO.order === 'DESC') items.reverse()
-		cart.CartItems = items;
-
 		res.status(200).json({
 			success:true,
 			message:'ACK| Cart got successfully.',
 			cart,
-			nextCursor: items.length ? items[items.length - 1].id : null,
+			nextCursor: cart.CartItems.length ? cart.CartItems[cart.CartItems.length - 1].id : null,
 		})
 	} catch (err) {
 		res.status(500).json({
+			limit: req.query.limit,
 			success: false,
-			message: 'ERROR| Internal server error.'
+			message: 'ERROR| Internal server error.',
+			err
 		})
 	}
 }
@@ -158,44 +176,36 @@ export const getCartIemsByName = async (req, res) => {
 			})
 		}
 
-		const cart  = await Cart.findOne({
-			where:{ user: req.payload.user},
-			include: {
-				model: CartItem,
-				where: getCartItemsByNameDTO.pagFilter,
-				required: true,
-				include : {
-					model:Product,
-					required:true,
-					where: {name: { [Op.like] : `%${getCartItemsByNameDTO.search}%` }},
-					include: {
-						model:Category,
-						required:true
-					}
-				}
-			}
-		})
+	  const cart = await Cart.findOne({
+      where: { user: req.payload.id },
+      include: {
+        model: CartItem,
+        separate: true,
+        where: getCartItemsByNameDTO.pagFilter,
+        order: [['id', getCartItemsByNameDTO.order]],
+        limit: getCartItemsByNameDTO.limit,
+        include: {
+          model: Product,
+          required: true,
+          where: { name: { [Op.like]: `%${getCartItemsByNameDTO.search}%` } },
+          include: {
+            model: Category,
+            required: true
+          }
+        }
+      }
+    });
 
 		if (!cart) return res.status(404).json({
 			success:false,
 			message: `ERROR| Cart not found.`
 		})
 
-		let items = cart.CartItems || [];
-
-		if (getCartItemsByNameDTO.after) {
-			items = items.filter( item => item.id > getCartItemsByNameDTO.after )
-		}
-
-		items = items.slice(0, getCartItemsByNameDTO.limit)
-		if (getCartItemsByNameDTO.order === 'DESC') items.reverse()
-		cart.CartItems = items;
-
 		res.status(200).json({
 			success: true,
 			message: 'ACK| Cart items got successfully.',
 			cart,
-			nextCursor: items.length ? items[items.length - 1].id : null,
+			nextCursor: cart.CartItems.length ? cart.CartItems[cart.CartItems.length - 1].id : null,
 		})
 	} catch (err) {
 		res.status(500).json({
