@@ -1,4 +1,4 @@
-import { Chat, User, UserChat, Message } from "../database/models";
+import { Chat, User, UserChat, Message } from "../database/models.js";
 
 export const createChat = async (req, res) => {
   /*
@@ -38,11 +38,12 @@ export const createChat = async (req, res) => {
 
 export const deleteChat = async (req, res) => {
   /*
-  Bussines Logic: The user can delete a chat just if the user is logged (use JWY middleware) and just if the user is a memeber of that chat.
+  Bussines Logic: The user can delete a chat just if the user is logged (use JWY middleware) and just if the user is a memeber of that chat (if is a gruop, the idea is do that if is the last member in the chat).
   Expected Params: :id is the id from the chat to remove.
   */
+
   try {
-    const { id } = req.params;
+    const id = parseInt(req.params.id);
     const userId = req.payload.id;
 
     const chatToDelete = await Chat.findOne({
@@ -52,12 +53,14 @@ export const deleteChat = async (req, res) => {
       success:false,
       message:`ERROR| Chat not found.`
     })
+
     if (!(await chatToDelete.hasUser(userId))) return res.status(403).json({
       success: false,
       message: `ERROR| This user isn't a memeber of this chat, can't delete the chat.`
     })
+    
+    await chatToDelete.destroy()
 
-    await chatToDelete.delete()
     res.status(200).json({
       success:true,
       message:`ACK| Chat deleted successfully.`
@@ -83,7 +86,7 @@ export const getChats = async (req, res) => {
       message: `ERROR| This user no longer exist.`
     })
 
-    const chats = await user.getChat();
+    const chats = await user.getChats();
 
     if (!chats) return res.status(404).json({
       success:false,
@@ -109,7 +112,7 @@ export const getChatById = async (req, res) => {
   Expected Params: :id -> Id of the chat.
   */
   try {
-    const chatId = req.params.id;
+    const chatId = parseInt(req.params.id);
     const userId = req.payload.id;
     const user = await User.findByPk(userId);
 
@@ -118,7 +121,7 @@ export const getChatById = async (req, res) => {
       message: `ERROR| This user no longer exist.`
     })
 
-    const chat = await user.getChat({
+    const chat = await user.getChats({
       where : { id : chatId },
       include:[
         {
@@ -154,45 +157,76 @@ export const updateChatMembers = async (req, res) => {
   Expected Body:
   {
     add : BOOL,
-    userId: Instance or id of the member to update.
+    userId: Id of the member to update.
+    willBeAdmin: BOOL
   }
   Expected Params: :id, is the id of the chat.
   */
   try {
-    const chatId = req.params.id;
-    const { userId, add } = req.body;
-    const type = await Chat.findOne({
+    const chatId = parseInt(req.params.id);
+    const { userId, add, willBeAdmin } = req.body;
+
+    const chat = await Chat.findOne({
       where: { id : chatId }
-    })?.type;
-    const isAdmin = await UserChat.findOne({
+    });
+
+    const type = chat?.type;
+
+    const relation = await UserChat.findOne({
       where: {
         chatFk: chatId,
-        userFk: userId,
+        userFk: req.payload.id,
       }
-    })?.isAdmin;
-
-    if (!isAdmin || !type) return res.status(404).json({
+    });
+    console.log("BEFORE")
+    const isAdmin = relation?.isAdmin;
+    console.log("AFTER")
+    if (!type) return res.status(404).json({
       success: false,
-      message: `ERROR| Chat not found, it doesn't exist or user is not member.`
+      message: `ERROR| Chat not found.`
     })
 
     if (type === 'contact') return res.status(422).json({
       success: false,
-      meesage: `ERROR| Type of chat is not supported for this request (contact).`
+      mesage: `ERROR| Type of chat is not supported for this request (contact).`
     })
 
-    if (isAdmin !== true && userId !== req.payload.id) return res.status(403).json({
+    if (!isAdmin && userId !== req.payload.id) return res.status(403).json({
       success: false,
       message: `ERROR| Unauthorized operation.`
     })
-
-    await (add ? Chat.addUser(userId) : Chat.removeUser(userId))
-
+    console.log("Hola")
+    await (add ? chat.addUser(userId, { through : { isAdmin : willBeAdmin }}) : chat.removeUser(userId))
+    console.log("Chau")
     res.status(200).json({
       success:true,
       message: `ACK| Operation done correctly.`
     })
 
+  } catch (err) {
+    res.status(500).json({
+      success:false,
+      message: `ERROR| Internal server error.`
+    })
+  }
+}
+
+export const verifyOwnSeen = async (req, res) => {
+  try {
+    /*
+      Expected Params: :id, Id of the message.
+    */
+
+    const msgId = req.params.id;
+    const userId = req.payload.id;
+
+    const message = (await Message.findByPk(msgId))
+    if (!message) return res.status(404).json({
+      success: false,
+      message: `ERROR| Message data not fuound.`
+    })
+    const seen = message.seenBy.includes(userId);
+    if (!seen) { return res.status(200).send(false) } else { return res.status(200).send(true) }
   } catch (err) {
     res.status(500).json({
       success:false,

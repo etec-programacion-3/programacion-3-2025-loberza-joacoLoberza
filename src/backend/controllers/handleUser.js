@@ -79,9 +79,9 @@ export const deleteUser = async (req, res) => {
   try {
     const userId = req.payload.id;
 
-    const user = await User.findOne({ where : { id: userId } })
-    const cart = await Cart.findOne({ where : { user : id } })
-    const cartItems = await CartItem.findOne({ where : { cart : Cart.id } })
+    const user = await User.findByPk(userId)
+    const cart = await Cart.findOne({ where : { user : userId } })
+    const cartItems = await CartItem.findOne({ where : { cart : cart.id } })
 
     if (!user || !cart) {
       return res.status(404).json({
@@ -90,7 +90,11 @@ export const deleteUser = async (req, res) => {
       })
     }
 
-    if (cartItems) {const oldCartItems = await cartItems.destroy();}
+    if (cartItems && cartItems.length > 0) {
+      for (const item of cartItems) {
+        await item.destroy();
+      }
+    }
     const oldCart = await cart.destroy();
     const oldUser = await user.destroy();
 
@@ -100,7 +104,7 @@ export const deleteUser = async (req, res) => {
     })
   } catch (err) {
     res.status(500).json({
-      success: true,
+      success: false,
       message: 'ERROR| Internal server error.'
     })
   }
