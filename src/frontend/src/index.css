@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root {
+    --main1:rgb(83, 80, 64);
+    --white1:rgb(255, 255, 255);
+    --white2:rgb(243, 242, 237);
+    --gray1:rgb(168, 168, 168);
+    
+    --roboto: 'Roboto', sans-serif;
+    --montserrat: 'Montserrat', sans-serif;
+}
+body {
+    margin: 0;
+}
+
+#root {
+    display: flex;
+    min-height: 100vh;
+    flex-flow:column wrap ;
+}
+
+#footer p {
+    margin: 10px;
+    color: white;
+}
