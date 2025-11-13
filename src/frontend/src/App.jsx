@@ -5,6 +5,11 @@ import { Chat } from "./components/Chats.jsx"
 import { Products } from "./components/Products.jsx"
 import Layout from "./components/Layout.jsx"
 
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -12,9 +17,9 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />}/>
           <Route path='store' element={<Products />}/>
-          <Route path='chats' element={<Chat />}/>
+          <Route path='chats' element={<ProtectedRoute children={<Chat />}/>}/>
         </Route>
-        <Route path='/loggin' element={<Loggin />}/>
+        <Route path='/loggin' element={<Loggin nextRoute={'/'}/>}/>
         <Route path='/register' element={<Register />}/>
       </Routes>
     </BrowserRouter>
