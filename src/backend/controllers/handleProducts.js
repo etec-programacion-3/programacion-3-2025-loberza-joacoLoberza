@@ -282,3 +282,35 @@ export const deleteProduct = async (req, res) => {
 		})
 	}
 }
+
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByPk(id, {
+      include: {
+        model: Category,
+        attributes: ['name'] // Traemos el nombre de la categoría
+      }
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'ERROR| Location: getProductById controller. Type: Product not found.'
+      });
+    }
+
+    // Devuelve toda la info del producto
+    res.status(200).json({
+      success: true,
+      message: 'ACK| Product retrieved successfully.',
+      product: product // Devuelve el objeto de producto encontrado
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: `ERROR| Location: getProductById controller.\nType: Internal server error:\n  ${err}`
+    });
+  }
+};

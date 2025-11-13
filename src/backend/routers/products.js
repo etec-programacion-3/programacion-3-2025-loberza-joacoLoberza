@@ -1,9 +1,10 @@
 import express from 'express';
-import { getManager, addProduct, deleteProduct, updateProduct} from '../controllers/handleProducts.js';
+import { getManager, addProduct, deleteProduct, updateProduct, getProductById} from '../controllers/handleProducts.js';
 import verifyToken from '../middlewares/jwtVerifyExpress.js'
 
 const productsRouter = express.Router();
 productsRouter.get('/', getManager)
+productsRouter.get('/:id', getProductById)
 productsRouter.post('/', verifyToken, addProduct)
 productsRouter.patch('/:id', verifyToken, updateProduct)
 productsRouter.delete('/:id', verifyToken, deleteProduct)

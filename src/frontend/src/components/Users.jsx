@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { logginSuccess } from "../storage/reducers/authSlice.js";
 
 export function Loggin ({ nextRoute, lastRoute }) {
-    const loginInputStyle = 'my-[4vh] h-[15px] rounded-[30px] border-[0px] p-[10px]'
+    
     const navigate = useNavigate();
     const dispatch = useDispatch()
 
@@ -31,20 +31,57 @@ export function Loggin ({ nextRoute, lastRoute }) {
             } else alert('¡Algo salió mal!')
 
         } catch (err) {
-            if (err.response.status === 401) {setFakePass(true)} else {setFakeValues(true)} 
+            if (err.response && err.response.status === 401) {setFakePass(true)} else {setFakeValues(true)} 
         }
     }
 
     return (
-        <div className="flex grow rounded-[10px] bg-[var(--white2)] m-[15px]">
-            <form onSubmit={loggin} className='flex flex-nowrap flex-col w-[40vw] h-[50vh] absolute top-[50%] left-[50%] translate-[-50%] bg-[var(--white3)] p-[10px] rounded-[15px] justify-between'>
-                <button type='button' onClick={() => navigate(lastRoute)}></button>
-                <div className='flex flex-col mb-[20px]'>
-                    <input type="text" placeholder="Usuario" onChange={e => setUser(e.target.value)} className={loginInputStyle}/>
-                    <input type="password" placeholder="Contraseña" onChange={e => setPassword(e.target.value)} className={loginInputStyle}/> 
-                    <input type="email" placeholder="Correo" onChange={e => setEmail(e.target.value)} className={loginInputStyle}/>
-                    {fakePass ? <p>Contraseña incorrecta</p> : (fakeValues && <p>Usuario o correo incorrecto</p>) }
-                    <button type='submit' className='border-[0px]'>Iniciar Sesión</button>
+        <div className="w-[100vw] min-h-[100vh] bg-[var(--white2)] p-[1rem] flex items-center justify-center">
+            <form onSubmit={loggin} className='relative flex flex-col w-[100%] max-w-[28rem] h-[auto] bg-[var(--white1)] p-[2rem] rounded-[0.75rem] shadow-[0_20px_25px_-5px_rgb(0,0,0,0.1),_0_8px_10px_-6px_rgb(0,0,0,0.1)]'>
+                <button 
+                    type='button' 
+                    onClick={() => navigate(lastRoute)} 
+                    className='absolute top-[1rem] left-[1.25rem] text-[rgb(75,85,99)] hover:text-[var(--main1)] hover:underline [font-family:var(--montserrat)] text-[0.875rem] font-[500]'
+                >
+                    &larr; Volver
+                </button>
+                
+                <h2 className="
+                    text-[1.5rem] font-[700] text-center text-[rgb(31,41,55)] [font-family:var(--montserrat)] mb-[1.5rem] mt-[2rem]
+                ">
+                    Iniciar Sesión
+                </h2>
+
+                <div className='flex flex-col'>
+                    <input 
+                        type="text" 
+                        placeholder="Usuario" 
+                        onChange={e => setUser(e.target.value)} 
+                        className="w-[100%] p-[0.75rem] rounded-[0.375rem] border-[1px] border-[rgb(209,213,219)] focus:outline-[none] focus:ring-[2px] focus:ring-[var(--main1)] mb-[1rem]"
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Contraseña" 
+                        onChange={e => setPassword(e.target.value)} 
+                        className="w-[100%] p-[0.75rem] rounded-[0.375rem] border-[1px] border-[rgb(209,213,219)] focus:outline-[none] focus:ring-[2px] focus:ring-[var(--main1)] mb-[1rem]"
+                    /> 
+                    <input 
+                        type="email" 
+                        placeholder="Correo" 
+                        onChange={e => setEmail(e.target.value)} 
+                        className="w-[100%] p-[0.75rem] rounded-[0.375rem] border-[1px] border-[rgb(209,213,219)] focus:outline-[none] focus:ring-[2px] focus:ring-[var(--main1)]"
+                    />
+                    
+                    <div className="h-[1.25rem] text-[0.875rem] text-center mt-[0.5rem]">
+                        {fakePass ? <p className="text-[rgb(220,38,38)]">Contraseña incorrecta</p> : (fakeValues && <p className="text-[rgb(220,38,38)]">Usuario o correo incorrecto</p>) }
+                    </div>
+
+                    <button 
+                        type='submit' 
+                        className='w-[100%] border-[0px] p-[0.75rem] bg-[var(--main1)] text-[var(--white1)] rounded-[0.5rem] font-[700] [font-family:var(--montserrat)] hover:bg-opacity-[0.9] transition-[background-color] mt-[1rem]'
+                    >
+                        Iniciar Sesión
+                    </button>
                 </div>
             </form>
         </div>

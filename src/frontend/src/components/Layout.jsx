@@ -30,7 +30,7 @@ function Footer () {
 
 function Navbar () {
     return (
-    <div className="flex flex-row justify-between py-[15px] bg-[var(--main1)]">
+    <div className="flex flex-row justify-between py-[15px] px-[10px] bg-[var(--main1)]">
         <nav>
             <NavLinks url='/' content='Inicio' />
             <NavLinks url='/store' content='Tienda' />
